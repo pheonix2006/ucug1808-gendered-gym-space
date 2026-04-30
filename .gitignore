@@ -1,0 +1,42 @@
+# Data
+data/raw/
+data/processed/
+
+# Output
+output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Claude
+CLAUDE.md
+
+# Playwright MCP
+.playwright-mcp/
+
+# LaTeX intermediate
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.log
+*.out
+*.run.xml
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz

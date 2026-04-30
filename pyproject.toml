@@ -1,0 +1,20 @@
+[project]
+name = "ucug1808-research"
+version = "0.1.0"
+description = "Spatial Environment and Body Image in Campus Gyms — Research Project"
+requires-python = ">=3.11"
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "scipy>=1.13",
+    "statsmodels>=0.14",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "openpyxl>=3.1",
+    "jupyter>=1.0",
+    "ipykernel>=6.29",
+    "nbformat>=5.10",
+]
+
+[tool.uv]
+dev-dependencies = []

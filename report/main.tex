@@ -1,0 +1,71 @@
+\documentclass[11pt, a4paper]{article}
+
+% ── 编码与中文支持 ──
+\usepackage[UTF8]{ctex}
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+\setCJKmainfont{SimSun}[BoldFont=SimHei, ItalicFont=KaiTi]
+
+% ── 页面与排版 ──
+\usepackage[margin=2.54cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{ragged2e}
+\justifying
+
+% ── 参考文献 APA 7 ──
+\usepackage[style=apa, backend=biber, natbib=true]{biblatex}
+\addbibresource{references.bib}
+
+% ── 图表 ──
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{float}
+\graphicspath{{figures/}}
+
+% ── 其他 ──
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{longtable}
+
+% ── 标题信息 ──
+\title{
+  亚洲女大学生校园健身房空间、身体意象与阻力训练回避研究\\[0.5em]
+  \normalsize Spatial Environment, Body Image, and Resistance Training Avoidance\\
+  among Asian Female College Students in Campus Gyms
+}
+\author{
+  Group Name \\[0.3em]
+  {\small Member 1 \and Member 2 \and Member 3 \and Member 4}
+}
+\date{
+  \small UCUG 1808 --- Sport in Society, 25/26 Spring Semester\\
+  \small Final Group Research Project
+}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\newpage
+
+% ── 目录（提交时可删除）──
+\tableofcontents
+\newpage
+
+% ── 正文各节 ──
+\input{sections/01_introduction}
+\input{sections/02_literature_review}
+\input{sections/03_methodology}
+\input{sections/04_results}
+\input{sections/05_discussion}
+\input{sections/06_conclusion}
+
+% ── 参考文献 ──
+\printbibliography[heading=bibintegrity, title={References}]
+
+\end{document}
