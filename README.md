@@ -23,7 +23,9 @@ Due: 11 May 2026
 │   ├── main.tex                  #   主文件
 │   ├── references.bib            #   APA 7 参考文献
 │   ├── sections/                 #   各章节 .tex
-│   └── figures/                  #   论文插图
+│   ├── figures/                  #   论文插图
+│   ├── build.sh                  #   编译脚本 (macOS / Linux / Git Bash)
+│   └── build.bat                 #   编译脚本 (Windows CMD，双击即用)
 ├── data/                         # 数据文件（已 gitignore）
 ├── paper/                        # 参考文献 PDF
 ├── proposal/                     # 开题报告
@@ -31,14 +33,25 @@ Due: 11 May 2026
 └── Final Group Research Project.pdf  # 课程作业要求
 ```
 
-## Environment Setup
+## Quick Start
+
+### 1. Python 环境
 
 ```bash
-# 安装依赖（需要 Python 3.11+ 和 uv）
+# 需要已安装 Python 3.11+ 和 uv
 uv sync
 ```
 
-## LaTeX Compilation
+### 2. LaTeX 编译
+
+#### 方式 A：一键脚本（推荐）
+
+```bash
+# Windows：双击 report/build.bat，或在 Git Bash 中运行：
+bash report/build.sh
+```
+
+#### 方式 B：手动编译
 
 ```bash
 cd report
@@ -47,6 +60,88 @@ biber main
 xelatex main
 xelatex main
 ```
+
+编译成功后输出 `report/main.pdf`。
+
+---
+
+## LaTeX 环境配置指南
+
+如果还没有安装 LaTeX，按以下步骤操作：
+
+### Windows（推荐 MiKTeX）
+
+1. **安装 MiKTeX**
+   - 下载：https://miktex.org/download
+   - 运行安装程序，保持默认选项即可
+   - 首次编译时会自动下载缺失宏包
+
+2. **安装 biber**
+   - 打开 MiKTeX Console → Packages → 搜索 `biber` → 安装
+
+3. **确认字体**
+   - 本项目使用 **Times New Roman**（系统自带）、**SimSun / SimHei / KaiTi**（Windows 自带）
+   - 如果字体缺失，`main.tex` 中的 `\setmainfont` 和 `\setCJKmainfont` 需要替换为已安装字体
+
+4. **验证安装**
+   ```bash
+   xelatex --version
+   biber --version
+   ```
+
+### macOS（推荐 MacTeX）
+
+1. **安装 MacTeX**
+   - 下载：https://www.tug.org/mactex/ （完整版约 5GB）
+   - 或安装精简版 BasicTeX 后手动补包：
+     ```bash
+     brew install --cask basictex
+     eval "$(/usr/libexec/path_helper)"
+     sudo tlmgr update --self
+     sudo tlmgr install ctex fontspec biblatex-apa biber booktabs tabularx enumitem longtable subcaption setspace ragged2e
+     ```
+
+2. **安装字体**
+   - macOS 无 SimSun/SimHei，需替换 `main.tex` 中的 CJK 字体为系统已有字体，例如：
+     ```latex
+     \setCJKmainfont{Songti SC}[BoldFont=Heiti SC, ItalicFont=STKaiti]
+     ```
+
+### Linux（推荐 TeX Live）
+
+```bash
+# Ubuntu / Debian
+sudo apt install texlive-full   # 完整安装（约 5GB）
+# 或最小安装 + 按需补包
+sudo apt install texlive-xetex texlive-lang-chinese texlive-bibtex-extra biber
+
+# 验证
+xelatex --version
+biber --version
+```
+
+### VS Code 编辑（可选）
+
+推荐安装以下扩展以获得 LaTeX 语法高亮和编译支持：
+
+- **LaTeX Workshop**（搜索 `ms-vscode.latex-workshop`）
+- 配置 `.vscode/settings.json`：
+  ```json
+  {
+    "latex-workshop.latex.tools": [
+      { "name": "xelatex", "command": "xelatex", "args": ["-synctex=1", "-interaction=nonstopmode", "%DOC%"] },
+      { "name": "biber", "command": "biber", "args": ["%DOCFILE%"] }
+    ],
+    "latex-workshop.latex.recipes": [
+      {
+        "name": "xelatex -> biber -> xelatex x2",
+        "tools": ["xelatex", "biber", "xelatex", "xelatex"]
+      }
+    ]
+  }
+  ```
+
+---
 
 ## Research Questions
 
