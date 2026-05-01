@@ -23,7 +23,6 @@ Thumbs.db
 .idea/
 
 # Claude
-CLAUDE.md
 .claude/
 
 # Playwright MCP
