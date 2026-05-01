@@ -1,6 +1,6 @@
-# Data
-data/raw/
-data/processed/
+# Data — removed: team needs shared access via git
+# data/raw/
+# data/processed/
 
 # Output
 output/
