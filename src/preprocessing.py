@@ -1,7 +1,30 @@
-"""Data preprocessing: cleaning, encoding, reverse scoring for Likert scales."""
+"""Data preprocessing and construct definitions for the project."""
 
 import pandas as pd
-import numpy as np
+
+
+SLIDER_CONSTRUCTS = {
+    "空间压迫/训练焦虑": [10, 11, 12, 13, 14, 15],
+    "社交媒体审美内化": [21, 22, 23],
+    "训练自我效能": [24],
+    "干预接受度": [25, 26, 27],
+}
+
+QUESTION_LABELS = {
+    10: "自由重量区不易接近",
+    11: "男性较多时不自在",
+    12: "镜子/公开可见增强被评价感",
+    13: "担心动作不标准被评价",
+    14: "自由重量区男性主导感",
+    15: "拥挤感降低停留意愿",
+    21: "审美内容影响运动选择",
+    22: "担心力量训练不够纤细",
+    23: "内化社交媒体女性身材标准",
+    24: "健身房训练目标自我效能",
+    25: "减少刻板印象会提升参与意愿",
+    26: "半私密分区会提升使用意愿",
+    27: "女性初学者workshop会提升尝试意愿",
+}
 
 
 def clean_survey(df: pd.DataFrame) -> pd.DataFrame:
@@ -38,3 +61,38 @@ def compute_scale_score(
             if item in subset.columns:
                 subset[item] = reverse_score(subset[item], max_val)
     return subset.mean(axis=1, skipna=True)
+
+
+def attach_slider_constructs(sliders: pd.DataFrame) -> pd.DataFrame:
+    """Attach readable item labels and construct names to slider summary rows."""
+    out = sliders.copy()
+    construct_lookup = {
+        q_num: construct
+        for construct, q_nums in SLIDER_CONSTRUCTS.items()
+        for q_num in q_nums
+    }
+    out["construct"] = out["q_num"].map(construct_lookup)
+    out["short_label"] = out["q_num"].map(QUESTION_LABELS).fillna(out["question"])
+    return out
+
+
+def construct_mean_summary(sliders: pd.DataFrame) -> pd.DataFrame:
+    """Summarize constructs from item-level aggregate means.
+
+    Because only aggregate item means are available, this returns construct
+    mean-of-item-means and item ranges, not participant-level SDs.
+    """
+    enriched = attach_slider_constructs(sliders).dropna(subset=["construct"])
+    summary = (
+        enriched.groupby("construct")
+        .agg(
+            items=("q_num", lambda s: ", ".join(f"Q{int(x)}" for x in s)),
+            item_count=("q_num", "count"),
+            mean=("mean", "mean"),
+            min_item_mean=("mean", "min"),
+            max_item_mean=("mean", "max"),
+            valid_n=("valid_n", "min"),
+        )
+        .reset_index()
+    )
+    return summary
