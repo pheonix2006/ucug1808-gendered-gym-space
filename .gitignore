@@ -24,9 +24,13 @@ Thumbs.db
 
 # Claude
 CLAUDE.md
+.claude/
 
 # Playwright MCP
 .playwright-mcp/
+
+# Download scripts
+download_papers.py
 
 # LaTeX intermediate
 *.aux
