@@ -7,7 +7,14 @@ SLIDER_CONSTRUCTS = {
     "空间压迫/训练焦虑": [10, 11, 12, 13, 14, 15],
     "社交媒体审美内化": [21, 22, 23],
     "训练自我效能": [24],
-    "干预接受度": [25, 26, 27],
+    "干预偏好指数": [25, 26, 27],
+}
+
+CONSTRUCT_SCORE_COLUMNS = {
+    "空间压迫/训练焦虑": "spatial_pressure",
+    "社交媒体审美内化": "media_internalization",
+    "训练自我效能": "training_self_efficacy",
+    "干预偏好指数": "intervention_preference",
 }
 
 QUESTION_LABELS = {
@@ -96,3 +103,13 @@ def construct_mean_summary(sliders: pd.DataFrame) -> pd.DataFrame:
         .reset_index()
     )
     return summary
+
+
+def score_participant_constructs(df: pd.DataFrame, column_lookup) -> pd.DataFrame:
+    """Compute participant-level construct scores from numbered survey columns."""
+    scored = df.copy()
+    for construct, q_nums in SLIDER_CONSTRUCTS.items():
+        score_col = CONSTRUCT_SCORE_COLUMNS[construct]
+        item_cols = [column_lookup(scored, q_num) for q_num in q_nums]
+        scored[score_col] = scored[item_cols].mean(axis=1, skipna=True)
+    return scored

@@ -22,6 +22,30 @@ def descriptive(df: pd.DataFrame, columns: list[str] | None = None) -> pd.DataFr
     return result
 
 
+def participant_scale_summary(
+    df: pd.DataFrame,
+    scales: dict[str, list[str]],
+) -> pd.DataFrame:
+    """Summarize participant-level scale/index scores."""
+    rows = []
+    for label, columns in scales.items():
+        score = df[columns].mean(axis=1, skipna=True)
+        rows.append(
+            {
+                "construct": label,
+                "items": ", ".join(columns),
+                "item_count": len(columns),
+                "n": int(score.notna().sum()),
+                "mean": score.mean(),
+                "sd": score.std(ddof=1),
+                "min": score.min(),
+                "max": score.max(),
+                "alpha": cronbach_alpha(df, columns) if len(columns) > 1 else np.nan,
+            }
+        )
+    return pd.DataFrame(rows)
+
+
 def cronbach_alpha(df: pd.DataFrame, items: list[str]) -> float:
     """Compute Cronbach's alpha for a set of items."""
     data = df[items].dropna()
@@ -79,6 +103,71 @@ def pearson_corr(x: pd.Series, y: pd.Series) -> tuple[float, float]:
     mask = x.notna() & y.notna()
     r, p = stats.pearsonr(x[mask], y[mask])
     return r, p
+
+
+def spearman_correlation_table(
+    df: pd.DataFrame,
+    variables: dict[str, str],
+) -> pd.DataFrame:
+    """Return pairwise Spearman correlations for named variables."""
+    rows = []
+    items = list(variables.items())
+    for i, (label_x, col_x) in enumerate(items):
+        for label_y, col_y in items[i + 1 :]:
+            sub = df[[col_x, col_y]].dropna()
+            rho, p = stats.spearmanr(sub[col_x], sub[col_y])
+            rows.append(
+                {
+                    "x": label_x,
+                    "y": label_y,
+                    "n": len(sub),
+                    "spearman_rho": rho,
+                    "p": p,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def spearman_correlation_matrix(
+    df: pd.DataFrame,
+    variables: dict[str, str],
+) -> pd.DataFrame:
+    """Return a labeled Spearman rho matrix."""
+    labels = list(variables.keys())
+    cols = list(variables.values())
+    matrix = df[cols].corr(method="spearman")
+    matrix.index = labels
+    matrix.columns = labels
+    return matrix
+
+
+def mann_whitney_group_table(
+    df: pd.DataFrame,
+    group_col: str,
+    variables: dict[str, str],
+    group_label: str,
+) -> pd.DataFrame:
+    """Compare two groups with descriptive means and Mann-Whitney U tests."""
+    rows = []
+    for label, col in variables.items():
+        yes = df.loc[df[group_col].eq(True), col].dropna()
+        no = df.loc[df[group_col].eq(False), col].dropna()
+        u, p = stats.mannwhitneyu(yes, no, alternative="two-sided")
+        rows.append(
+            {
+                "group": group_label,
+                "variable": label,
+                "yes_n": len(yes),
+                "yes_mean": yes.mean(),
+                "yes_sd": yes.std(ddof=1),
+                "no_n": len(no),
+                "no_mean": no.mean(),
+                "no_sd": no.std(ddof=1),
+                "mann_whitney_u": u,
+                "p": p,
+            }
+        )
+    return pd.DataFrame(rows)
 
 
 def point_biserial(x: pd.Series, y: pd.Series) -> tuple[float, float]:

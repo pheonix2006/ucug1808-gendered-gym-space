@@ -1,4 +1,4 @@
-"""Rebuild project notebooks so they reflect the actual aggregate data workflow."""
+"""Rebuild project notebooks so they reflect the current mixed survey workflow."""
 
 from __future__ import annotations
 
@@ -51,20 +51,22 @@ def main() -> None:
     write_notebook(
         "01_data_overview.ipynb",
         [
-            md("# 01 — 数据概览与清洗\n\n解析问卷平台导出的汇总 Excel，并确认真实样本量、题型和可分析的数据粒度。"),
+            md("# 01 — 数据概览与清洗\n\n解析问卷平台导出的汇总 Excel 和逐名文本版答卷矩阵，并确认真实样本量、题型和可分析的数据粒度。"),
             code(COMMON_SETUP),
             md("## 1. 解析问卷汇总导出"),
             code(
                 """
-from src.data_loader import parse_survey_export
+from src.data_loader import load_participant_survey, parse_survey_export
 from src.preprocessing import attach_slider_constructs
 
 parsed = parse_survey_export(ROOT / "data" / "问卷原始数据.xlsx")
 questions = parsed["questions"]
 options = parsed["options"]
 sliders = attach_slider_constructs(parsed["sliders"])
+participants = load_participant_survey(ROOT / "data" / "processed" / "问卷数据_文本版.xlsx")
 
 print(f"Questions: {len(questions)}")
+print(f"Participant-level core rows: {len(participants)}")
 display(questions.head(12))
 """
             ),
@@ -99,13 +101,13 @@ print(out_dir)
     write_notebook(
         "02_scale_analysis.ipynb",
         [
-            md("# 02 — 量表/构念汇总\n\n当前问卷文件是汇总导出，不是逐名参与者作答矩阵。因此 Cronbach's alpha、McDonald's omega 和个体层面的量表总分不能从该文件计算。本 notebook 报告可由汇总数据支持的题项均值、构念均值和高分段比例。"),
+            md("# 02 — 量表/构念汇总\n\n当前项目同时保留汇总导出和逐名文本版答卷矩阵。本 notebook 报告题项均值、高分段比例、个体层面构念均值和探索性 Cronbach's alpha。"),
             code(COMMON_SETUP),
             code(
                 """
-from src.data_loader import parse_survey_export
-from src.preprocessing import attach_slider_constructs, construct_mean_summary
-from src.analysis import slider_bin_agreement
+from src.analysis import participant_scale_summary, slider_bin_agreement
+from src.data_loader import load_participant_survey, parse_survey_export, question_column
+from src.preprocessing import SLIDER_CONSTRUCTS, attach_slider_constructs, construct_mean_summary
 
 parsed = parse_survey_export(ROOT / "data" / "问卷原始数据.xlsx")
 sliders = attach_slider_constructs(parsed["sliders"])
@@ -115,6 +117,12 @@ agreement = slider_bin_agreement(parsed["options"]).merge(
     how="left",
 )
 constructs = construct_mean_summary(parsed["sliders"])
+participants = load_participant_survey(ROOT / "data" / "processed" / "问卷数据_文本版.xlsx")
+item_columns = {
+    construct: [question_column(participants, q_num) for q_num in q_nums]
+    for construct, q_nums in SLIDER_CONSTRUCTS.items()
+}
+participant_summary = participant_scale_summary(participants, item_columns)
 """
             ),
             md("## 1. 滑动条题项均值"),
@@ -123,6 +131,8 @@ constructs = construct_mean_summary(parsed["sliders"])
             code("display(constructs)"),
             md("## 3. 高分段比例\n\n高分段定义为平台导出的 3.5--4.2 与 4.3--5 两个分段之和。"),
             code('display(agreement[["q_num", "short_label", "mean", "low_pct", "mid_pct", "high_pct"]])'),
+            md("## 4. 个体层面构念均值与信度\n\n干预偏好三题测量不同方案，不作为严格反映式量表解释。"),
+            code('display(participant_summary[["construct", "item_count", "n", "mean", "sd", "alpha"]])'),
         ],
     )
 
@@ -179,7 +189,7 @@ for construct, frame in sliders.groupby("construct", dropna=True):
         "空间压迫/训练焦虑": "spatial_anxiety",
         "社交媒体审美内化": "media_internalization",
         "训练自我效能": "training_self_efficacy",
-        "干预接受度": "intervention_acceptance",
+        "干预偏好指数": "intervention_acceptance",
     }
     fig.savefig(fig_dir / f"slider_{aliases.get(construct, construct)}.png", dpi=200)
     print(construct, q_nums)
@@ -191,12 +201,19 @@ for construct, frame in sliders.groupby("construct", dropna=True):
     write_notebook(
         "04_inferential_analysis.ipynb",
         [
-            md("# 04 — 研究问题整合分析\n\n本数据集不能进行个体层面的相关、t 检验或回归。本 notebook 以题项均值、高分段比例、多选频数和访谈主题进行研究问题层面的描述性整合。"),
+            md("# 04 — 研究问题整合分析\n\n本 notebook 以题项均值、高分段比例、多选频数、Spearman 相关、Mann--Whitney 组间比较和访谈主题进行研究问题层面的探索性整合。"),
             code(COMMON_SETUP),
             code(
                 """
-from src.data_loader import parse_survey_export
-from src.analysis import frequency_table, slider_bin_agreement
+from src.analysis import (
+    frequency_table,
+    mann_whitney_group_table,
+    slider_bin_agreement,
+    spearman_correlation_matrix,
+    spearman_correlation_table,
+)
+from src.data_loader import load_participant_survey, parse_survey_export
+from src.participant_analysis import build_participant_scores
 from src.preprocessing import attach_slider_constructs, construct_mean_summary
 
 parsed = parse_survey_export(ROOT / "data" / "问卷原始数据.xlsx")
@@ -208,6 +225,16 @@ agreement = slider_bin_agreement(options).merge(
     how="left",
 )
 constructs = construct_mean_summary(parsed["sliders"])
+participants = load_participant_survey(ROOT / "data" / "processed" / "问卷数据_文本版.xlsx")
+participant_scores = build_participant_scores(participants)
+
+corr_variables = {
+    "空间压迫/训练焦虑": "spatial_pressure",
+    "社交媒体审美内化": "media_internalization",
+    "训练自我效能": "training_self_efficacy",
+    "干预偏好指数": "intervention_preference",
+    "自由重量区回避频率": "avoidance_frequency_score",
+}
 """
             ),
             md("## RQ1: 空间压迫与自由重量区回避"),
@@ -217,6 +244,24 @@ display(constructs[constructs["construct"].eq("空间压迫/训练焦虑")])
 display(agreement[agreement["construct"].eq("空间压迫/训练焦虑")][["q_num", "short_label", "mean", "high_pct"]])
 display(frequency_table(options, 16))
 display(frequency_table(options, 17))
+display(participant_scores[["spatial_pressure", "avoidance_frequency_score"]].corr(method="spearman"))
+"""
+            ),
+            md("## 新增实验 1：主要变量 Spearman 相关\n\n这里使用逐名文本版答卷矩阵。由于 $N=32$，结果只作为探索性双变量证据，不作为因果或预测模型。"),
+            code(
+                """
+correlations = spearman_correlation_table(participant_scores, corr_variables)
+display(correlations.assign(
+    spearman_rho=lambda d: d["spearman_rho"].round(3),
+    p=lambda d: d["p"].round(4),
+))
+"""
+            ),
+            md("## 新增实验 2：相关矩阵"),
+            code(
+                """
+corr_matrix = spearman_correlation_matrix(participant_scores, corr_variables)
+display(corr_matrix.round(3))
 """
             ),
             md("## RQ2: 社交媒体审美内化与训练偏好"),
@@ -230,9 +275,162 @@ display(frequency_table(options, 9))
             md("## RQ3: 干预偏好与行动建议"),
             code(
                 """
-display(constructs[constructs["construct"].eq("干预接受度")])
-display(agreement[agreement["construct"].eq("干预接受度")][["q_num", "short_label", "mean", "high_pct"]])
+display(constructs[constructs["construct"].eq("干预偏好指数")])
+display(agreement[agreement["construct"].eq("干预偏好指数")][["q_num", "short_label", "mean", "high_pct"]])
 display(frequency_table(options, 18))
+"""
+            ),
+            md("## 新增实验 3：组间比较\n\n比较最常使用自由重量区者与其他人，以及有系统力量训练经验者与其他人。组别非常不平衡，使用 Mann--Whitney $U$，结果只辅助解释。"),
+            code(
+                """
+group_comparisons = pd.concat(
+    [
+        mann_whitney_group_table(
+            participant_scores,
+            "free_weight_user",
+            corr_variables,
+            "最常使用自由重量区",
+        ),
+        mann_whitney_group_table(
+            participant_scores,
+            "systematic_strength_training",
+            corr_variables,
+            "有系统力量训练经验",
+        ),
+    ],
+    ignore_index=True,
+)
+display(group_comparisons.assign(
+    yes_mean=lambda d: d["yes_mean"].round(2),
+    yes_sd=lambda d: d["yes_sd"].round(2),
+    no_mean=lambda d: d["no_mean"].round(2),
+    no_sd=lambda d: d["no_sd"].round(2),
+    p=lambda d: d["p"].round(4),
+))
+"""
+            ),
+        ],
+    )
+
+    write_notebook(
+        "06_participant_level_analysis.ipynb",
+        [
+            md("# 06 — 逐名问卷矩阵新增实验\n\n这个 notebook 专门放新增的个体层面分析。输入文件是 `data/processed/问卷数据_文本版.xlsx`，核心样本为通过筛选后的 32 名女性在校大学生。"),
+            code(COMMON_SETUP),
+            md("## 1. 读取逐名文本版数据并生成去身份化得分表"),
+            code(
+                """
+from src.analysis import (
+    mann_whitney_group_table,
+    participant_scale_summary,
+    spearman_correlation_matrix,
+    spearman_correlation_table,
+)
+from src.data_loader import load_participant_survey, question_column
+from src.participant_analysis import build_participant_scores
+from src.preprocessing import SLIDER_CONSTRUCTS
+
+participants = load_participant_survey(ROOT / "data" / "processed" / "问卷数据_文本版.xlsx")
+participant_scores = build_participant_scores(participants)
+
+print("核心逐名样本 N =", len(participants))
+display(participant_scores.head())
+"""
+            ),
+            md("## 2. 构念得分与 Cronbach's alpha\n\n空间压迫/训练焦虑和社交媒体审美内化可以解释为短量表；干预偏好三题是不同干预方案的偏好题组，不作严格量表信度解释。"),
+            code(
+                """
+item_columns = {
+    construct: [question_column(participants, q_num) for q_num in q_nums]
+    for construct, q_nums in SLIDER_CONSTRUCTS.items()
+}
+scale_summary = participant_scale_summary(participants, item_columns)
+display(scale_summary[["construct", "item_count", "n", "mean", "sd", "min", "max", "alpha"]].round(3))
+"""
+            ),
+            md("## 3. 自由重量区回避频率编码检查"),
+            code(
+                """
+display(
+    participant_scores["avoidance_frequency"]
+    .value_counts()
+    .rename_axis("avoidance_frequency")
+    .reset_index(name="count")
+)
+display(participant_scores[["avoidance_frequency", "avoidance_frequency_score"]].head(10))
+"""
+            ),
+            md("## 4. Spearman 相关实验"),
+            code(
+                """
+corr_variables = {
+    "空间压迫/训练焦虑": "spatial_pressure",
+    "社交媒体审美内化": "media_internalization",
+    "训练自我效能": "training_self_efficacy",
+    "干预偏好指数": "intervention_preference",
+    "自由重量区回避频率": "avoidance_frequency_score",
+}
+correlations = spearman_correlation_table(participant_scores, corr_variables)
+display(correlations.assign(
+    spearman_rho=lambda d: d["spearman_rho"].round(3),
+    p=lambda d: d["p"].round(4),
+))
+"""
+            ),
+            md("## 5. Spearman 相关矩阵与热力图"),
+            code(
+                """
+from src.visualization import correlation_heatmap
+
+corr_matrix = spearman_correlation_matrix(participant_scores, corr_variables)
+display(corr_matrix.round(3))
+
+fig_dir = ROOT / "report" / "figures"
+fig_dir.mkdir(parents=True, exist_ok=True)
+fig = correlation_heatmap(corr_matrix, title="探索性 Spearman 相关矩阵")
+fig.savefig(fig_dir / "survey_spearman_correlations.png", dpi=200)
+print(fig_dir / "survey_spearman_correlations.png")
+"""
+            ),
+            md("## 6. Mann--Whitney 组间比较实验"),
+            code(
+                """
+group_comparisons = pd.concat(
+    [
+        mann_whitney_group_table(
+            participant_scores,
+            "free_weight_user",
+            corr_variables,
+            "最常使用自由重量区",
+        ),
+        mann_whitney_group_table(
+            participant_scores,
+            "systematic_strength_training",
+            corr_variables,
+            "有系统力量训练经验",
+        ),
+    ],
+    ignore_index=True,
+)
+display(group_comparisons.assign(
+    yes_mean=lambda d: d["yes_mean"].round(2),
+    yes_sd=lambda d: d["yes_sd"].round(2),
+    no_mean=lambda d: d["no_mean"].round(2),
+    no_sd=lambda d: d["no_sd"].round(2),
+    p=lambda d: d["p"].round(4),
+))
+"""
+            ),
+            md("## 7. 保存新增实验输出"),
+            code(
+                """
+out_dir = ROOT / "data" / "processed"
+participant_scores.to_csv(out_dir / "survey_participant_scores.csv", index=False, encoding="utf-8-sig")
+scale_summary.to_csv(out_dir / "survey_participant_scale_summary.csv", index=False, encoding="utf-8-sig")
+correlations.to_csv(out_dir / "survey_spearman_correlations.csv", index=False, encoding="utf-8-sig")
+corr_matrix.to_csv(out_dir / "survey_spearman_matrix.csv", encoding="utf-8-sig")
+group_comparisons.to_csv(out_dir / "survey_group_comparisons.csv", index=False, encoding="utf-8-sig")
+print(out_dir)
 """
             ),
         ],
@@ -246,7 +444,7 @@ display(frequency_table(options, 18))
             code(
                 """
 from src.data_loader import load_interviews
-from scripts.run_analysis import code_interviews, representative_quotes
+from src.qualitative_analysis import code_interviews, representative_quotes
 
 interviews = load_interviews()
 print(f"QA segments: {len(interviews)}")

@@ -9,31 +9,33 @@ Due: 11 May 2026
 
 The project now uses the collected data rather than the earlier expected-results scaffold.
 
-- Quantitative data: questionnaire platform aggregate export, not participant-level raw rows.
+- Quantitative data: questionnaire platform aggregate export plus a participant-level text-version response matrix.
 - Core analytic sample: 32 female college students after screening.
 - Qualitative data: three semi-structured interview QA transcripts.
-- Analysis style: descriptive and exploratory, using aggregate-safe summaries, figures, and thematic coding.
+- Analysis style: descriptive and exploratory, using aggregate summaries, participant-level scale scores, Spearman correlations, non-parametric group comparisons, figures, and thematic coding.
 - Final report: `report/main.tex` and `report/main.pdf`.
 
-Because the questionnaire export is aggregated, the project does **not** claim participant-level Cronbach's alpha, correlations, t-tests, regressions, or mediation analysis.
+Because the core sample is small ($N=32$), the project treats participant-level Cronbach's alpha, Spearman correlations, and Mann--Whitney group comparisons as exploratory. It does **not** claim regressions, mediation analysis, prediction models, or causal effects.
 
 ## Project Structure
 
 ```text
 ├── src/                          # Reusable Python helpers
-│   ├── data_loader.py            # Survey aggregate parser and interview loader
-│   ├── preprocessing.py          # Construct labels and aggregate construct summaries
-│   ├── analysis.py               # Aggregate-safe frequency/agreement helpers
+│   ├── data_loader.py            # Survey aggregate parser, participant matrix loader, interview loader
+│   ├── participant_analysis.py    # Participant-level scoring and group flags
+│   ├── qualitative_analysis.py    # Interview theme coding and quote selection
+│   ├── preprocessing.py          # Construct labels, aggregate summaries, participant scoring
+│   ├── analysis.py               # Frequency, reliability, correlation, group-comparison helpers
 │   └── visualization.py          # Chinese-font charts for report figures
 ├── scripts/
-│   ├── run_analysis.py           # Generate processed data, tables, and report figures
 │   └── build_notebooks.py        # Rebuild notebooks from the current workflow
 ├── notebooks/                    # Executable analysis notebooks
 │   ├── 01_data_overview.ipynb
 │   ├── 02_scale_analysis.ipynb
 │   ├── 03_descriptive_statistics.ipynb
 │   ├── 04_inferential_analysis.ipynb
-│   └── 05_qualitative_analysis.ipynb
+│   ├── 05_qualitative_analysis.ipynb
+│   └── 06_participant_level_analysis.ipynb
 ├── data/
 │   └── processed/                # Versioned processed outputs for reproducibility
 ├── output/                       # Ignored scratch tables from local analysis runs
@@ -60,27 +62,18 @@ Because the questionnaire export is aggregated, the project does **not** claim p
 uv sync
 ```
 
-### 2. Run the Full Analysis Pipeline
-
-```bash
-uv run python scripts/run_analysis.py
-```
-
-This writes:
-
-- `data/processed/*.csv`
-- `output/tables/*.csv` local scratch outputs
-- `report/figures/*.png`
-
-### 3. Execute Notebooks
+### 2. Execute Notebooks
 
 Use the project virtual environment rather than a system Jupyter install:
+
 
 ```bash
 uv run python -m jupyter nbconvert --to notebook --execute --inplace notebooks/*.ipynb
 ```
 
-### 4. Compile the Report
+This writes processed CSV files under `data/processed/` and report figures under `report/figures/`.
+
+### 3. Compile the Report
 
 ```bash
 cd report
@@ -105,7 +98,7 @@ The survey uses 5-point slider/Likert-style items adapted for this project aroun
 - Spatial pressure / training anxiety
 - Social-media aesthetic internalization
 - Training self-efficacy
-- Intervention acceptance
+- Intervention preference
 
 The qualitative component uses three semi-structured interviews. The project should not describe this material as a focus group.
 
@@ -160,7 +153,6 @@ sudo apt install texlive-xetex texlive-lang-chinese texlive-bibtex-extra biber
 Before submission:
 
 ```bash
-uv run python scripts/run_analysis.py
 uv run python -m jupyter nbconvert --to notebook --execute --inplace notebooks/*.ipynb
 cd report
 xelatex main && biber main && xelatex main && xelatex main

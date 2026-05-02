@@ -1,9 +1,8 @@
 """Data loading utilities for the UCUG 1808 survey and interview data.
 
 The survey file in ``data/`` is an aggregate export from the questionnaire
-platform rather than participant-level raw rows.  The helpers below preserve
-that distinction by parsing question blocks into question metadata, option
-frequencies, and slider summaries.
+platform.  A later text-version export in ``data/processed/`` contains one
+row per respondent, which supports exploratory participant-level scoring.
 """
 
 from __future__ import annotations
@@ -15,6 +14,7 @@ import pandas as pd
 
 DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 DEFAULT_SURVEY_FILE = DATA_DIR / "问卷原始数据.xlsx"
+DEFAULT_PARTICIPANT_SURVEY_FILE = DATA_DIR / "processed" / "问卷数据_文本版.xlsx"
 QUESTION_RE = re.compile(r"第\s*(\d+)\s*题[:：]\s*(.*?)\s*\[(.*?)\]\s*$", re.S)
 
 
@@ -53,6 +53,50 @@ def load_survey(filepath: str | None = None, header: int | None = None, **kwargs
     if path.suffix == ".xlsx":
         return pd.read_excel(path, header=header, **kwargs)
     return pd.read_csv(path, header=header, **kwargs)
+
+
+def question_column(df: pd.DataFrame, q_num: int) -> str:
+    """Return the participant-level column that starts with a question number."""
+    prefix = f"{q_num}、"
+    matches = [col for col in df.columns if isinstance(col, str) and col.startswith(prefix)]
+    if not matches:
+        raise KeyError(f"Question column Q{q_num} not found")
+    return matches[0]
+
+
+def option_column(df: pd.DataFrame, q_num: int, option_keyword: str) -> str:
+    """Return a multi-select option column by question number and option text."""
+    prefix = f"{q_num}、"
+    matches = [
+        col
+        for col in df.columns
+        if isinstance(col, str) and col.startswith(prefix) and option_keyword in col
+    ]
+    if not matches:
+        raise KeyError(f"Option column Q{q_num} containing {option_keyword!r} not found")
+    return matches[0]
+
+
+def load_participant_survey(
+    filepath: str | Path | None = None,
+    core_only: bool = True,
+    **kwargs,
+) -> pd.DataFrame:
+    """Load the participant-level text-version survey export.
+
+    By default this returns the core analytic sample: respondents with Q3 age
+    present, i.e. those who passed the student and gender screening questions.
+    IP/source metadata remain in the raw Excel file but are not needed for
+    scoring or reporting.
+    """
+    path = Path(filepath) if filepath else DEFAULT_PARTICIPANT_SURVEY_FILE
+    df = pd.read_excel(path, **kwargs)
+    for col in df.select_dtypes(include="object").columns:
+        df[col] = df[col].map(normalize_text)
+    if core_only:
+        age_col = question_column(df, 3)
+        df = df[df[age_col].ne("") & df[age_col].notna()].copy()
+    return df
 
 
 def parse_survey_export(filepath: str | None = None) -> dict[str, pd.DataFrame]:
