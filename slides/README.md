@@ -17,4 +17,4 @@ Suggested timing:
 
 Important speaking constraint:
 
-Do not claim Cronbach's alpha, correlation, t-test, regression, mediation, or causal proof. The survey file is an aggregate platform export, so the presentation should frame the quantitative evidence as descriptive and exploratory.
+The updated survey matrix now supports participant-level construct scores, Cronbach's alpha for the short item groups, Spearman correlations, and exploratory Mann-Whitney comparisons. Present these as small-sample exploratory evidence only. Do not claim regression, mediation, prediction, or causal proof.
