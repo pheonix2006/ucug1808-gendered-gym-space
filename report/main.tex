@@ -1,30 +1,28 @@
 \documentclass[11pt, a4paper]{article}
 
-% ── 编码与中文支持 ──
-\usepackage[UTF8]{ctex}
+% ── Encoding & Fonts ──
 \usepackage{fontspec}
 \setmainfont{Times New Roman}
-\setCJKmainfont{SimSun}[BoldFont=SimHei, ItalicFont=KaiTi]
 
-% ── 页面与排版 ──
+% ── Page Layout ──
 \usepackage[margin=2.54cm]{geometry}
 \usepackage{setspace}
 \onehalfspacing
 \usepackage{ragged2e}
 \justifying
 
-% ── 参考文献 APA 7 ──
+% ── References APA 7 ──
 \usepackage[style=apa, backend=biber, natbib=true]{biblatex}
 \addbibresource{references.bib}
 
-% ── 图表 ──
+% ── Figures & Tables ──
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{float}
 \graphicspath{{figures/}}
 
-% ── 其他 ──
+% ── Other ──
 \usepackage{hyperref}
 \hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue}
 \usepackage{caption}
@@ -32,10 +30,9 @@
 \usepackage{enumitem}
 \usepackage{longtable}
 
-% ── 标题信息 ──
+% ── Title Information ──
 \title{
-  亚洲女大学生校园健身房空间、身体意象与阻力训练回避研究\\[0.5em]
-  \normalsize Spatial Environment, Body Image, and Resistance Training Avoidance\\
+  Spatial Environment, Body Image, and Resistance Training Avoidance\\
   among Asian Female College Students in Campus Gyms
 }
 \author{
@@ -52,24 +49,18 @@
 \thispagestyle{empty}
 
 \begin{abstract}
-本研究采用混合方法设计，结合在线问卷（$N = 32$）与半结构化访谈（$n = 3$），考察亚洲女大学生在校园健身房中对阻力训练的回避机制。
-结果显示，78.13\% 的参与者使用过学校健身房，但仅 15.63\% 最常使用自由重量区。
-空间压迫/训练焦虑与回避频率呈较强正相关（Spearman's $\rho = .65$, $p < .001$），而社交媒体审美内化与回避的相关较弱且未达到显著水平（$\rho = .31$, $p = .084$）。
-``不想练出明显肌肉''作为回避原因为 0\%，表明回避主要不是由对肌肉化的恐惧驱动，而是来自空间可见性、新手门槛和器械知识不足的叠加压力。
-受访者普遍采用错峰、同伴陪伴等策略性协商方式进入健身房，而非完全退出运动。
-96.88\% 的参与者支持学校提供女性初学者力量训练 workshop。
-研究建议高校通过入门指导、半私密分区和叙事转变降低自由重量区的进入成本，使性别平等从形式上的设备开放走向实际的空间可达。
+This study employed a mixed-methods design, combining an online questionnaire ($N = 32$) with semi-structured interviews ($n = 3$), to examine the mechanisms of resistance training avoidance among Asian female college students in campus gyms. Results showed that 78.13\% of participants had used the campus gym, but only 15.63\% most frequently used the free-weight area. Spatial pressure/training anxiety was moderately-to-strongly correlated with avoidance frequency (Spearman's $\rho = .65$, $p < .001$), whereas social media appearance internalization showed a weaker and non-significant association with avoidance ($\rho = .31$, $p = .084$). ``Not wanting to build visible muscle'' was endorsed by 0\% of participants as an avoidance reason, indicating that avoidance was primarily driven not by fear of muscularity but by the compounding pressures of spatial visibility, beginner barriers, and insufficient equipment knowledge. Interviewees commonly employed strategic negotiation strategies such as off-peak timing and companion accompaniment to access the gym, rather than completely withdrawing from exercise. 96.88\% of participants supported the provision of beginner-friendly women's strength training workshops by the university. The study recommends that higher education institutions reduce the entry costs of free-weight areas through introductory guidance, semi-private partitioning, and narrative shifts, thereby moving gender equity from formal equipment access toward actual spatial accessibility.
 
 \noindent\textbf{Keywords: } resistance training avoidance, gym intimidation, spatial pressure, body image, female college students, mixed methods
 \end{abstract}
 
 \newpage
 
-% ── 目录（提交时可删除）──
+% ── Table of Contents (can be removed before submission) ──
 \tableofcontents
 \newpage
 
-% ── 正文各节 ──
+% ── Main Sections ──
 \input{sections/01_introduction}
 \input{sections/02_literature_review}
 \input{sections/03_methodology}
@@ -77,12 +68,12 @@
 \input{sections/05_discussion}
 \input{sections/06_conclusion}
 
-% ── 生成式 AI 使用说明 ──
+% ── Generative AI Disclosure ──
 \section*{Use of Generative AI}
 \addcontentsline{toc}{section}{Use of Generative AI}
 Generative AI tools were used as auxiliary support for coding assistance, data-cleaning workflow design, drafting support, language polishing, and preliminary consistency checks. All quantitative interpretations, qualitative themes, literature use, and final arguments were reviewed and revised by the authors against the available survey export, interview transcripts, assignment brief, proposal, and cited sources.
 
-% ── 参考文献 ──
+% ── References ──
 \printbibliography[heading=bibintoc, title={References}]
 
 \end{document}
