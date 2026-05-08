@@ -25,6 +25,12 @@ Thumbs.db
 # Claude
 .claude/
 
+# Serena
+.serena/
+
+# Slides
+slides/
+
 # Playwright MCP
 .playwright-mcp/
 
