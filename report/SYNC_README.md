@@ -28,3 +28,13 @@ cp -r figures "E:/Project/1808论文/report/"
 
 - Compiler: **XeLaTeX**
 - Main document: `main.tex`
+
+## Overleaf 已知问题
+
+`main.tex` 中的 `\setCJKmainfont{SimSun}[BoldFont=SimHei, ItalicFont=KaiTi]` 在 Overleaf 上会报错，因为 Overleaf（Linux）没有 SimSun/SimHei/KaiTi 这些 Windows 字体。
+
+推送到 Overleaf 前需将这行临时注释掉，或替换为 Overleaf 支持的字体，例如：
+
+```latex
+\setCJKmainfont{Noto Serif CJK SC}[BoldFont=Noto Sans CJK SC Bold, ItalicFont=Noto Serif CJK SC Bold]
+```
