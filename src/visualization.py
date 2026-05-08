@@ -11,7 +11,7 @@ OUTPUT_DIR = Path(__file__).resolve().parent.parent / "output" / "plots"
 sns.set_theme(style="whitegrid", font_scale=1.1)
 plt.rcParams["figure.dpi"] = 150
 plt.rcParams["savefig.bbox"] = "tight"
-plt.rcParams["font.sans-serif"] = ["SimHei", "Microsoft YaHei", "Arial Unicode MS", "DejaVu Sans"]
+plt.rcParams["font.sans-serif"] = ["Arial", "DejaVu Sans"]
 plt.rcParams["axes.unicode_minus"] = False
 
 
@@ -55,28 +55,31 @@ def correlation_heatmap(
 def slider_distribution_plot(slider_options, labels, title: str = "") -> plt.Figure:
     """Stacked percentage bar chart for aggregate slider bins."""
     bins = ["1–1.8分", "1.9–2.6分", "2.7–3.4分", "3.5–4.2分", "4.3–5分"]
+    bin_labels_en = ["1–1.8", "1.9–2.6", "2.7–3.4", "3.5–4.2", "4.3–5"]
     plot_df = slider_options.pivot_table(
         index="q_num", columns="option", values="count", aggfunc="sum", fill_value=0
     ).reindex(columns=bins, fill_value=0)
     pct_df = plot_df.div(plot_df.sum(axis=1), axis=0) * 100
     pct_df.index = [labels.get(q, f"Q{q}") for q in pct_df.index]
+    pct_df.columns = bin_labels_en
 
     fig, ax = plt.subplots(figsize=(10, max(4, len(pct_df) * 0.55)))
     colors = ["#b2182b", "#ef8a62", "#f7f7f7", "#67a9cf", "#2166ac"]
     pct_df.plot(kind="barh", stacked=True, ax=ax, color=colors, edgecolor="white")
-    ax.set_xlabel("百分比 (%)")
+    ax.set_xlabel("Percentage (%)")
     ax.set_ylabel("")
     ax.set_xlim(0, 100)
     ax.set_title(title)
-    ax.legend(title="滑动条分段", bbox_to_anchor=(1.02, 1), loc="upper left")
+    ax.legend(title="Score Segment", bbox_to_anchor=(1.02, 1), loc="upper left")
     return fig
 
 
-def horizontal_frequency_plot(freq_df, title: str = "", xlabel: str = "百分比 (%)") -> plt.Figure:
+def horizontal_frequency_plot(freq_df, title: str = "", xlabel: str = "Percentage (%)", labels: dict | None = None) -> plt.Figure:
     """Horizontal percentage bar chart for aggregate frequency tables."""
     frame = freq_df.dropna(subset=["pct"]).sort_values("pct")
+    y_labels = [labels.get(opt, opt) for opt in frame["option"]] if labels else list(frame["option"])
     fig, ax = plt.subplots(figsize=(8, max(3.5, len(frame) * 0.45)))
-    ax.barh(frame["option"], frame["pct"], color="#4c78a8")
+    ax.barh(y_labels, frame["pct"], color="#4c78a8")
     ax.set_xlabel(xlabel)
     ax.set_ylabel("")
     ax.set_title(title)
